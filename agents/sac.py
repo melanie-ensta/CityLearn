@@ -145,14 +145,12 @@ class SAC:
 
                 state_ = (state_  - self.norm_mean[uid])/self.norm_std[uid]
                 state_ = torch.FloatTensor(state_).unsqueeze(0).to(self.device)
-
                 if deterministic is False:
                     act, _, _ = self.policy_net[uid].sample(state_)
                 else:
                     _, _, act = self.policy_net[uid].sample(state_)
 
                 actions.append(act.detach().cpu().numpy()[0])
-                    
         return np.array(actions), None
                 
         

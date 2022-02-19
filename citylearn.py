@@ -128,7 +128,6 @@ def building_loader(data_path, building_attributes, weather_file, solar_profile,
             simulation_data = data_path / data_file
             with open(simulation_data) as csv_file:
                 data = pd.read_csv(csv_file)
-
             building.sim_results['cooling_demand'] = list(data['Cooling Load [kWh]'])
             building.sim_results['heating_demand'] = list(data['Heating Load [kWh]'])
             building.sim_results['dhw_demand'] = list(data['DHW Heating [kWh]'])
@@ -295,7 +294,7 @@ def building_loader(data_path, building_attributes, weather_file, solar_profile,
     return buildings, observation_spaces, action_spaces, observation_space_central_agent, action_space_central_agent
 
 class CityLearn(gym.Env):  
-    def __init__(self, data_path, building_attributes, weather_file, solar_profile, building_ids, carbon_intensity = None, buildings_states_actions = None, simulation_period = (0,8759), cost_function = ['ramping','1-load_factor','average_daily_peak','peak_demand','net_electricity_consumption'], central_agent = False, save_memory = True, verbose = 0):
+    def __init__(self, data_path, building_attributes, weather_file, solar_profile, building_ids, carbon_intensity = None, buildings_states_actions=None , simulation_period = (0,8759), cost_function = ['ramping','1-load_factor','average_daily_peak','peak_demand','net_electricity_consumption'], central_agent = False, save_memory = True, verbose = 0):
         with open(os.path.join(data_path,buildings_states_actions)) as json_file:
             self.buildings_states_actions = json.load(json_file)
         
@@ -425,7 +424,7 @@ class CityLearn(gym.Env):
 
                 # Adding loads from appliances and subtracting solar generation to the net electrical load of each building
                 building_electric_demand = round(_electric_demand_cooling + _electric_demand_heating + _electric_demand_dhw + _non_shiftable_load - _solar_generation, 4)
-
+                # print(building_electric_demand)
                 # Electricity consumed by every building
                 building.current_net_electricity_demand = building_electric_demand
                 self.buildings_net_electricity_demand.append(-building_electric_demand) # >0 if solar generation > electricity consumption
@@ -433,16 +432,17 @@ class CityLearn(gym.Env):
                 # Total electricity consumption
                 electric_demand += building_electric_demand
                 
+            
             assert len(actions) == 0, 'Some of the actions provided were not used'
             
         else:
             
             assert len(actions) == self.n_buildings, "The length of the list of actions should match the length of the list of buildings."
-
+            # print(len(actions))
+            # print(actions)
             for actions, (uid, building) in zip(actions, self.buildings.items()):
-
                 assert sum(self.buildings_states_actions[uid]['actions'].values()) == len(actions), "The number of input actions for building "+str(uid)+" must match the number of actions defined in the list of building attributes."
-
+                
                 # cooling and heating storage for HVAC
                 if self.buildings_states_actions[uid]['actions']['cooling_storage']:
                     cooling_storage_action = actions[0]
@@ -493,7 +493,8 @@ class CityLearn(gym.Env):
 
                 # Adding loads from appliances and subtracting solar generation to the net electrical load of each building
                 building_electric_demand = round(_electric_demand_electrical_storage + _electric_demand_cooling + _electric_demand_heating + _electric_demand_dhw + _non_shiftable_load - _solar_generation, 4)
-
+                # print(_electric_demand_electrical_storage,_electric_demand_cooling, _electric_demand_heating, _electric_demand_dhw , _non_shiftable_load  )
+                # print(building_electric_demand)
                 # Electricity consumed by every building
                 building.current_net_electricity_demand = building_electric_demand
                 self.buildings_net_electricity_demand.append(-building_electric_demand)    
@@ -514,8 +515,9 @@ class CityLearn(gym.Env):
                             if state_name in ['t_in', 'avg_unmet_setpoint', 'rh_in', 'non_shiftable_load', 'solar_gen']:
                                 s.append(building.sim_results[state_name][self.time_step])
                             elif state_name == 'net_electricity_consumption':
+                                # print(building.current_net_electricity_demand)
                                 s.append(building.current_net_electricity_demand)
-                            elif state_name not in ['cooling_storage_soc', 'heating_storage_soc', 'dhw_storage_soc']:
+                            elif state_name not in ['cooling_storage_soc', 'heating_storage_soc', 'dhw_storage_soc','electrical_storage_soc']:
                                 s.append(building.sim_results[state_name][self.time_step])
                                 s_appended.append(state_name)
                             elif state_name == 'cooling_storage_soc':
@@ -524,6 +526,8 @@ class CityLearn(gym.Env):
                                 s.append(building.heating_storage._soc/building.heating_storage.capacity)
                             elif state_name == 'dhw_storage_soc':
                                 s.append(building.dhw_storage._soc/building.dhw_storage.capacity)
+                            elif state_name == 'electrical_storage_soc':
+                                s.append(building.electrical_storage._soc/building.electrical_storage.capacity)
             
             self.state = np.array(s)
             rewards = reward_function_sa(self.buildings_net_electricity_demand)
@@ -537,6 +541,7 @@ class CityLearn(gym.Env):
                 for state_name, value in self.buildings_states_actions[uid]['states'].items():
                     if value == True:
                         if state_name == 'net_electricity_consumption':
+                            # print(building.current_net_electricity_demand)
                             s.append(building.current_net_electricity_demand)
                         elif state_name not in ['cooling_storage_soc', 'heating_storage_soc', 'dhw_storage_soc', 'electrical_storage_soc']:
                             s.append(building.sim_results[state_name][self.time_step])
@@ -624,7 +629,7 @@ class CityLearn(gym.Env):
                                 s.append(building.sim_results[state_name][self.time_step])
                             elif state_name == 'net_electricity_consumption':
                                 s.append(building.current_net_electricity_demand)
-                            elif state_name not in ['cooling_storage_soc', 'heating_storage_soc', 'dhw_storage_soc']:
+                            elif state_name not in ['cooling_storage_soc', 'heating_storage_soc', 'dhw_storage_soc','electrical_storage_soc']:
                                 s.append(building.sim_results[state_name][self.time_step])
                                 s_appended.append(state_name)
                             elif state_name == 'cooling_storage_soc':
@@ -632,6 +637,8 @@ class CityLearn(gym.Env):
                             elif state_name == 'heating_storage_soc':
                                 s.append(0.0)
                             elif state_name == 'dhw_storage_soc':
+                                s.append(0.0)
+                            elif state_name == 'electrical_storage_soc':
                                 s.append(0.0)
             self.state = np.array(s)
         else:
@@ -670,7 +677,7 @@ class CityLearn(gym.Env):
         if is_terminal:
             for building in self.buildings.values():
                 building.terminate()
-                
+            
             # When the simulation is over, convert all the control variables to numpy arrays so they are easier to plot.
             self.carbon_emissions = np.array(self.carbon_emissions)
             self.net_electric_consumption = np.array(self.net_electric_consumption)

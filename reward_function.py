@@ -29,25 +29,22 @@ class reward_function_ma:
         else:
             
             # Use this reward when running the SAC example. It assumes that the building-agents act independently of each other, without sharing information through the reward.
-            reward_ = np.array(electricity_demand)**3.0
-            reward_[reward_>0] = 0
+            reward_ = np.array(electricity_demand*(-1))**3.0
+            # print(electricity_demand)
+            reward_[reward_<0] = 0
             return list(reward_)
     
       
         
-        
-        
-        
-        
-        
-        
+
         
 # Do not use or delete
 # Reward function for the centralized agent. To be used only if all the buildings receive the same reward.
 def reward_function_sa(electricity_demand):
-
     reward_ = -np.array(electricity_demand).sum()
-    reward_ = max(0, reward_)
+    reward_ = max(0, reward_) #équivalent de reward_[reward_>0] = 0, énergie en plus que j'ai produit
     reward_ = reward_**3.0
     
     return reward_
+
+
