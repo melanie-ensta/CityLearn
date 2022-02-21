@@ -54,39 +54,35 @@ from stable_baselines3.common.evaluation import evaluate_policy
 model = A2C("MlpPolicy", env, verbose=1)
 model.save("a2c_1building")
 
-mean_reward_before_train = evaluate_policy(model, env, n_eval_episodes=1)
-print(mean_reward_before_train)
-model.learn(total_timesteps=8760*2)
-del model # remove to demonstrate saving and loading
+# mean_reward_before_train = evaluate_policy(model, env, n_eval_episodes=1)
+# print(mean_reward_before_train)
+cost=[]
+n_epochs=8
 
-model = A2C.load("a2c_1building", env=env)
-
-# Evaluate the agent
-# NOTE: If you use wrappers with your environment that modify rewards,
-#       this will be reflected here. To evaluate with original rewards,
-#       wrap environment in a "Monitor" wrapper before other wrappers.
-
-# mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=1)
-# print(mean_reward, std_reward) #1050912960.7053878    1.1920928955078125e-07
-
-obs = env.reset()
-dones=False
-list_rewards=[]
-list_cost=[]
-while not dones:
-    action, _states = model.predict(obs)
-    obs, rewards, dones, info = env.step(action)
-    list_rewards.append(rewards)
-    # print(env.cost())
-    # list_cost.append(env.cost())
+for i in range (n_epochs):
+    model.learn(total_timesteps=8760*i) #train on i epochs
+    obs = env.reset()
+    dones=False
+    list_rewards=[]
     
-plt.plot(np.arange(8760),list_rewards)
-plt.show()
-mean_100ep_reward = round(np.mean(list_rewards[-100:]), 1)
-print("Mean reward 100 derniers j:", mean_100ep_reward, "Num episodes:", len(list_rewards))
+    while not dones:
+        action, _states = model.predict(obs)
+        obs, rewards, dones, info = env.step(action)
+        list_rewards.append(rewards)
+    cost.append(env.cost())
+    
+    # print(env.cost()['net_electricity_consumption'])
+    
+print([cost[i] for i in range(n_epochs)])
 
-# # print(list_rewards[0:5])
-print(env.cost())
+# plt.plot(n_epochs, [cost[i]['net_electricity_consumption'] for i in range(n_epochs)])
+# plt.show()
+
+
+
+# mean_100ep_reward = round(np.mean(list_rewards[-100:]), 1)
+# print("Mean reward 100 derniers j:", mean_100ep_reward, "Num episodes:", len(list_rewards))
+
 
 
 # #########################################################################
