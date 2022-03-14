@@ -41,10 +41,8 @@ class reward_function_ma:
 # Do not use or delete
 # Reward function for the centralized agent. To be used only if all the buildings receive the same reward.
 def reward_function_sa(electricity_demand):
-    reward_ = -np.array(electricity_demand).sum()
-    reward_ = max(0, reward_) #équivalent de reward_[reward_>0] = 0, énergie en plus que j'ai produit
-    reward_ = reward_**3.0
+    electricity_demand=np.array(electricity_demand).sum()
+    return(electricity_demand)
     
-    return reward_
 
 

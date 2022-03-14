@@ -44,37 +44,36 @@ params = {'data_path':data_path,
 # Contain the lower and upper bounds of the states and actions, to be provided to the agent to normalize the variables between 0 and 1.
 env = CityLearn(**params)
 #############################################################################################################
+env.step(env.observation_space.step())
 
 
 
+# ########A2C##########
+# from stable_baselines3.common.evaluation import evaluate_policy
 
-########A2C##########
-from stable_baselines3.common.evaluation import evaluate_policy
+# model = A2C("MlpPolicy", env, verbose=1)
+# model.save("a2c_1building")
 
-model = A2C("MlpPolicy", env, verbose=1)
-model.save("a2c_1building")
+# # mean_reward_before_train = evaluate_policy(model, env, n_eval_episodes=1)
+# # print(mean_reward_before_train)
+# cost=[]
+# n_epochs=1
 
-# mean_reward_before_train = evaluate_policy(model, env, n_eval_episodes=1)
-# print(mean_reward_before_train)
-cost=[]
-n_epochs=8
-
-for i in range (n_epochs):
-    model.learn(total_timesteps=8760*i) #train on i epochs
-    obs = env.reset()
-    dones=False
-    list_rewards=[]
+# for i in range (n_epochs):
+#     model.learn(total_timesteps=8760*i) #train on i epochs
+#     obs = env.reset()
+#     dones=False
+#     list_rewards=[]
     
-    while not dones:
-        action, _states = model.predict(obs)
-        obs, rewards, dones, info = env.step(action)
-        list_rewards.append(rewards)
-    cost.append(env.cost())
+#     for i in range(2):
+#         action, _states = model.predict(obs)
+#         obs, rewards, dones, info = env.step(action)
+#         list_rewards.append(rewards)
+#     # cost.append(env.cost())
     
-    # print(env.cost()['net_electricity_consumption'])
+#     # print(env.cost()['net_electricity_consumption'])
     
-print([cost[i] for i in range(n_epochs)])
-
+# print(list_rewards)
 # plt.plot(n_epochs, [cost[i]['net_electricity_consumption'] for i in range(n_epochs)])
 # plt.show()
 

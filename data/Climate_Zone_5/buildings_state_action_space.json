@@ -34,7 +34,7 @@
       "carbon_intensity": true
     },
     "actions": {
-      "cooling_storage": true,
+      "cooling_storage": false,
       "heating_storage": false,
       "dhw_storage": true,
       "electrical_storage": false    }
